@@ -51,7 +51,11 @@ async fn main() -> Result<()> {
 
     tracing::info!("Server running on port 8000");
 
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await?;
+
+    tracing::info!("All connections drained. Shutting down.");
 
     Ok(())
 }
@@ -75,4 +79,28 @@ fn initialize_tracing() -> Result<()> {
                 .with_thread_names(false),
         )
         .try_init()?)
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("Failed to install SIGINT handler");
+    };
+
+    #[cfg(unix)]
+    let sigterm = async {
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("Failed to install SIGTERM handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let sigterm = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {tracing::info!("Received SIGINT, shutting down");},
+        _ = sigterm => {tracing::info!("Received SIGTERM, shutting down");}
+    }
 }
