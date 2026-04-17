@@ -39,6 +39,7 @@ async fn main() -> Result<()> {
 
     let db = mongo_client.database("stage1");
     let profile_repo = stage1::models::db::ProfileRepo::new(&db);
+    profile_repo.create_indexes().await?;
 
     let state = AppState {
         client: reqwest_client,
