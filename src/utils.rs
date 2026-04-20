@@ -1,6 +1,7 @@
 use serde_json::Value;
 
 use crate::{
+    COUNTRIES,
     client::ReqwestClient,
     errors::{AppError, Result},
     models::{
@@ -10,18 +11,34 @@ use crate::{
     },
 };
 
+pub fn iso_to_country_name(code: &str) -> &'static str {
+    let uppercase_code = code.to_uppercase();
+
+    COUNTRIES
+        .iter()
+        .find(|&(_, &val)| val == uppercase_code)
+        .map(|(&key, _)| key)
+        .unwrap_or("Unknown")
+}
+
 pub fn validate_name(name_value: Option<Value>) -> Result<String> {
     match name_value {
-        None => Err(AppError::BadRequest("Missing or empty name".to_string())),
+        None => Err(AppError::BadRequest(
+            "Missing or empty parameter".to_string(),
+        )),
         Some(Value::String(name)) => {
             let trimmed = name.trim().to_string();
             if trimmed.is_empty() {
-                Err(AppError::BadRequest("Missing or empty name".to_string()))
+                Err(AppError::BadRequest(
+                    "Missing or empty parameter".to_string(),
+                ))
             } else {
                 Ok(trimmed)
             }
         }
-        Some(_) => Err(AppError::UnprocessableEntity("Invalid type".to_string())),
+        Some(_) => Err(AppError::UnprocessableEntity(
+            "Invalid parameter type".to_string(),
+        )),
     }
 }
 
@@ -88,6 +105,7 @@ pub async fn fetch_country_data(
         .ok_or_else(|| AppError::UpstreamInvalidResponse("Nationalize".to_string()))?;
 
     Ok(NationalizeResponse {
+        country_name: iso_to_country_name(&best_country.country_id).to_string(),
         country_id: best_country.country_id,
         country_probability: best_country.probability,
     })
