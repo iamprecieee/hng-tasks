@@ -94,9 +94,21 @@ pub async fn list_profiles(
         gender: query.gender,
         country_id: query.country_id,
         age_group: query.age_group,
+        min_age: query.min_age,
+        max_age: query.max_age,
+        min_gender_probability: query.min_gender_probability,
+        min_country_probability: query.min_country_probability,
     };
 
-    let profiles = state.db.find_all(filters).await?;
+    let page = query.page.unwrap_or(1).max(1);
+    let limit = query.limit.unwrap_or(10).min(50);
+    let sort_by = query.sort_by.unwrap_or_default();
+    let order = query.order.unwrap_or_default();
+
+    let (profiles, total) = state
+        .db
+        .find_paginated(filters, sort_by, order, page, limit)
+        .await?;
 
     let data: Vec<ProfileListEntry> = profiles
         .into_iter()
@@ -116,7 +128,9 @@ pub async fn list_profiles(
 
     Ok(Json(ProfileListResponse {
         status: "success".into(),
-        count: data.len(),
+        page,
+        limit,
+        total,
         data,
     }))
 }

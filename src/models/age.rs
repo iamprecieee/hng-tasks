@@ -1,7 +1,8 @@
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 pub enum AgeGroup {
+    #[default]
     Child,
     Teenager,
     Adult,
@@ -16,12 +17,6 @@ impl AgeGroup {
             20..=59 => Self::Adult,
             60.. => Self::Senior,
         }
-    }
-}
-
-impl Default for AgeGroup {
-    fn default() -> Self {
-        Self::Child
     }
 }
 
