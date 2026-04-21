@@ -1,7 +1,7 @@
-use crate::COUNTRIES_LOWER;
 use crate::errors::{AppError, Result};
 use crate::models::db::ProfileFilters;
 use crate::models::profile::{SearchQuery, SortBy, SortOrder};
+use crate::{COUNTRIES_LOWER, STOP_WORDS};
 
 pub fn parse_query(search_query: &str) -> Result<(ProfileFilters, SearchQuery)> {
     let trimmed_query = search_query.trim().to_lowercase();
@@ -97,6 +97,9 @@ pub fn parse_query(search_query: &str) -> Result<(ProfileFilters, SearchQuery)> 
             }
             "senior" | "seniors" | "old" | "elderly" => {
                 filters.age_group = Some("senior".to_string());
+                is_value_parsed = true;
+            }
+            token if STOP_WORDS.contains(&token) => {
                 is_value_parsed = true;
             }
             _ => {}
