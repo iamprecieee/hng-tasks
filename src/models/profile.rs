@@ -24,7 +24,7 @@ pub struct ProfileListResponse {
     pub data: Vec<Profile>,
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum SortBy {
     #[default]
@@ -33,7 +33,7 @@ pub enum SortBy {
     GenderProbability,
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum SortOrder {
     #[default]
