@@ -3,6 +3,24 @@ use crate::errors::{AppError, Result};
 use crate::models::db::ProfileFilters;
 use crate::models::profile::{SearchQuery, SortBy, SortOrder};
 
+/// Parses a natural language search query into structured database filters.
+///
+/// Converts a plain English query (e.g., "young males from nigeria") into a `ProfileFilters`
+/// struct and a `SearchQuery` struct containing limit and sort instructions.
+///
+/// # Arguments
+///
+/// * `search_query` - A string slice that holds the raw query to be parsed.
+///
+/// # Returns
+///
+/// Returns a `Result` containing a tuple of `(ProfileFilters, SearchQuery)` if the query
+/// contains recognized demographic filters.
+///
+/// # Errors
+///
+/// Returns `AppError::BadRequest("Unable to interpret query")` if no valid demographic
+/// tokens are recognized or if the query consists entirely of stop words.
 pub fn parse_query(search_query: &str) -> Result<(ProfileFilters, SearchQuery)> {
     let trimmed_query = search_query.trim().to_lowercase();
     let mut filters = ProfileFilters::default();

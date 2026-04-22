@@ -11,22 +11,34 @@ pub struct JsonError {
     pub status: String,
 }
 
+/// Represents all possible errors that can occur in the application.
+/// 
+/// These errors are automatically converted into JSON responses with the correct
+/// HTTP status codes.
 #[derive(Debug, Error)]
 pub enum AppError {
+    /// IO-related failures.
     #[error("{0}")]
     IoError(#[from] std::io::Error),
+    /// Errors initialization the tracing subscriber.
     #[error("{0}")]
     TryInitError(#[from] tracing_subscriber::util::TryInitError),
+    /// External service (e.g., MongoDB, Agify) is unreachable or failed.
     #[error("{0}")]
     ServiceUnavailable(String),
+    /// The request was malformed or could not be interpreted by the parser.
     #[error("{0}")]
     BadRequest(String),
+    /// Input validation failed (e.g., invalid query parameter type).
     #[error("{0}")]
     UnprocessableEntity(String),
+    /// An unexpected internal failure.
     #[error("{0}")]
     InternalServerError(String),
+    /// An external API returned data that doesn't meet our minimum quality thresholds.
     #[error("{0}")]
     UpstreamInvalidResponse(String),
+    /// The requested resource (e.g., a specific profile ID) was not found.
     #[error("{0}")]
     NotFound(String),
 }

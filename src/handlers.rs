@@ -19,6 +19,23 @@ use axum::{
 };
 use uuid::Uuid;
 
+/// Creates a new profile by querying external demography APIs (Genderize, Agify, Nationalize).
+///
+/// If a profile with the given name already exists, it is returned instead (idempotent).
+///
+/// # Arguments
+///
+/// * `state` - The application state containing the database repository and HTTP client.
+/// * `payload` - JSON payload containing the profile `name`.
+///
+/// # Returns
+///
+/// Returns `201 Created` with the new profile data on success, or `200 OK` if it already exists.
+///
+/// # Errors
+///
+/// Returns `AppError::BadRequest` for missing/empty name.
+/// Returns `AppError::BadGateway` if external APIs return unusable data.
 pub async fn create_profile(
     State(state): State<AppState>,
     payload: std::result::Result<Json<CreateProfileRequest>, JsonRejection>,
@@ -70,6 +87,20 @@ pub async fn create_profile(
         .into_response())
 }
 
+/// Retrieves a single profile by its UUID.
+///
+/// # Arguments
+///
+/// * `state` - The application state containing the database repository.
+/// * `id` - The UUID of the requested profile.
+///
+/// # Returns
+///
+/// Returns `200 OK` with the full profile object if found.
+///
+/// # Errors
+///
+/// Returns `AppError::NotFound` if no profile exists with the given ID.
 pub async fn get_profile(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -87,6 +118,21 @@ pub async fn get_profile(
     }))
 }
 
+/// Lists profiles with optional filtering, sorting, and pagination.
+///
+/// # Arguments
+///
+/// * `state` - The application state containing the database repository.
+/// * `query` - Optional query parameters for filtering (`gender`, `age_group`, `country_id`, etc.),
+///   sorting (`sort_by`, `order`), and pagination (`page`, `limit`).
+///
+/// # Returns
+///
+/// Returns a `ProfileListResponse` containing the paginated data and metadata.
+///
+/// # Errors
+///
+/// Returns `AppError::UnprocessableEntity` if query parameters are structurally invalid.
 pub async fn list_profiles(
     State(state): State<AppState>,
     query: std::result::Result<Query<ProfileQuery>, QueryRejection>,
@@ -125,6 +171,20 @@ pub async fn list_profiles(
     }))
 }
 
+/// Deletes an existing profile by its UUID.
+///
+/// # Arguments
+///
+/// * `state` - The application state containing the database repository.
+/// * `id` - The UUID of the profile to delete.
+///
+/// # Returns
+///
+/// Returns `204 No Content` on successful deletion.
+///
+/// # Errors
+///
+/// Returns `AppError::NotFound` if no profile matches the given ID.
 pub async fn delete_profile(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -138,6 +198,23 @@ pub async fn delete_profile(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// Searches for profiles using a natural language query string.
+///
+/// The query is parsed into demographic filters (gender, age group, country) and combined
+/// with any explicit query parameters (which take precedence).
+///
+/// # Arguments
+///
+/// * `state` - The application state containing the database repository.
+/// * `query` - Query parameters including the mandatory `q` search string.
+///
+/// # Returns
+///
+/// Returns a `ProfileListResponse` containing the paginated search results.
+///
+/// # Errors
+///
+/// Returns `AppError::BadRequest` if the query is missing or cannot be interpreted.
 pub async fn search_profiles(
     State(state): State<AppState>,
     query: std::result::Result<Query<SearchQuery>, QueryRejection>,
