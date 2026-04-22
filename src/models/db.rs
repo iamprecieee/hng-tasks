@@ -107,6 +107,15 @@ impl ProfileRepo {
             )
             .build();
 
+        let country_prob_index = IndexModel::builder()
+            .keys(bson::doc! { "country_probability": 1 })
+            .options(
+                IndexOptions::builder()
+                    .name("idx_country_prob".to_string())
+                    .build(),
+            )
+            .build();
+
         self.collection
             .create_indexes(vec![
                 name_index,
@@ -115,6 +124,7 @@ impl ProfileRepo {
                 age_index,
                 created_at_index,
                 prob_index,
+                country_prob_index,
             ])
             .await
             .map_err(|e| {
