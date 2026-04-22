@@ -326,9 +326,3 @@ lazy_static! {
             .collect()
     };
 }
-
-pub const STOP_WORDS: &[&str] = &[
-    "people", "person", "show", "find", "give", "me", "who", "are", "is", "list", "all",
-    "everyone", "anybody", "someone", "with", "the", "a", "an", "of", "that", "have", "profiles",
-    "records", "entries",
-];
