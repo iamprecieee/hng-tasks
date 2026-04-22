@@ -169,17 +169,11 @@ impl ProfileRepo {
         }
 
         if let Some(country) = filters.country_id {
-            filter_doc.insert(
-                "country_id",
-                bson::doc! { "$regex": format!("^{}$", country), "$options": "i" },
-            );
+            filter_doc.insert("country_id", country.to_uppercase());
         }
 
         if let Some(age) = filters.age_group {
-            filter_doc.insert(
-                "age_group",
-                bson::doc! { "$regex": format!("^{}$", age), "$options": "i" },
-            );
+            filter_doc.insert("age_group", age.to_lowercase());
         }
 
         let mut age_doc = bson::doc! {};

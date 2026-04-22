@@ -155,7 +155,7 @@ pub async fn list_profiles(
     };
 
     let page = query.page.unwrap_or(1).max(1);
-    let limit = query.limit.unwrap_or(10).min(50);
+    let limit = query.limit.unwrap_or(10).clamp(1, 50);
     let sort_by = query.sort_by.unwrap_or_default();
     let order = query.order.unwrap_or_default();
 
@@ -240,7 +240,7 @@ pub async fn search_profiles(
     let limit = query
         .limit
         .unwrap_or(parsed_search_query.limit.unwrap_or(10))
-        .min(50);
+        .clamp(1, 50);
     let sort_by = query
         .sort_by
         .unwrap_or(parsed_search_query.sort_by.unwrap_or_default());
