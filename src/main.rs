@@ -38,7 +38,8 @@ async fn main() -> Result<()> {
 
     tracing::info!("Successfully connected to MongoDB Atlas");
 
-    let db = mongo_client.database("stage1");
+    let db_name = std::env::var("DATABASE_NAME").unwrap_or_else(|_| "stage2".to_string());
+    let db = mongo_client.database(&db_name);
     let profile_repo = models::db::ProfileRepo::new(&db);
     profile_repo.create_indexes().await?;
 

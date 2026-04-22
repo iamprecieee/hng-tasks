@@ -86,7 +86,7 @@ pub type Result<T> = std::result::Result<T, AppError>;
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        let status = StatusCode::from_u16(self.status_code()).unwrap();
+        let status = StatusCode::from_u16(self.status_code()).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
         let body = serde_json::to_string(&self.to_json_error())
             .unwrap_or_else(|_| r#"{"status": "error", "message": "Server failure"}"#.to_string());
         (status, [("content-type", "application/json")], body).into_response()

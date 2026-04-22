@@ -44,6 +44,6 @@ COPY --from=builder /app/target/release/stage2 /app/stage2
 
 ENV RUST_LOG=info
 
-EXPOSE 3000
+EXPOSE 8000
 
 ENTRYPOINT ["/app/stage2"]
