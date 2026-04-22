@@ -4,7 +4,7 @@ use crate::{
     models::{
         db::{Profile, ProfileFilters},
         profile::{
-            CreateProfileRequest, ProfileListEntry, ProfileListResponse, ProfileQuery,
+            CreateProfileRequest, ProfileListResponse, ProfileQuery,
             ProfileResponse, SearchQuery,
         },
     },
@@ -114,21 +114,7 @@ pub async fn list_profiles(
         .find_paginated(filters, sort_by, order, page, limit)
         .await?;
 
-    let data: Vec<ProfileListEntry> = profiles
-        .into_iter()
-        .map(|profile| ProfileListEntry {
-            id: profile.id,
-            name: profile.name,
-            gender: profile.gender,
-            gender_probability: profile.gender_probability,
-            age: profile.age,
-            age_group: profile.age_group,
-            country_id: profile.country_id,
-            country_name: profile.country_name,
-            country_probability: profile.country_probability,
-            created_at: profile.created_at,
-        })
-        .collect();
+    let data = profiles;
 
     Ok(Json(ProfileListResponse {
         status: "success".into(),
@@ -187,21 +173,7 @@ pub async fn search_profiles(
         .find_paginated(filters, sort_by, order, page, limit)
         .await?;
 
-    let data: Vec<ProfileListEntry> = profiles
-        .into_iter()
-        .map(|profile| ProfileListEntry {
-            id: profile.id,
-            name: profile.name,
-            gender: profile.gender,
-            gender_probability: profile.gender_probability,
-            age: profile.age,
-            age_group: profile.age_group,
-            country_id: profile.country_id,
-            country_name: profile.country_name,
-            country_probability: profile.country_probability,
-            created_at: profile.created_at,
-        })
-        .collect();
+    let data = profiles;
 
     Ok(Json(ProfileListResponse {
         status: "success".into(),

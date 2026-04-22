@@ -1,7 +1,7 @@
 use serde_json::Value;
 
 use crate::{
-    COUNTRIES,
+    countries::COUNTRIES,
     client::ReqwestClient,
     errors::{AppError, Result},
     models::{

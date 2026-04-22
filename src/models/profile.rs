@@ -16,26 +16,12 @@ pub struct ProfileResponse {
 }
 
 #[derive(Debug, Serialize)]
-pub struct ProfileListEntry {
-    pub id: String,
-    pub name: String,
-    pub gender: String,
-    pub gender_probability: f64,
-    pub age: u8,
-    pub age_group: String,
-    pub country_id: String,
-    pub country_name: String,
-    pub country_probability: f64,
-    pub created_at: String,
-}
-
-#[derive(Debug, Serialize)]
 pub struct ProfileListResponse {
     pub status: String,
     pub page: u32,
     pub limit: u32,
     pub total: u64,
-    pub data: Vec<ProfileListEntry>,
+    pub data: Vec<Profile>,
 }
 
 #[derive(Debug, Deserialize, Default)]

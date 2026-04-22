@@ -1,4 +1,4 @@
-use crate::COUNTRIES_LOWER;
+use crate::countries::COUNTRIES_LOWER;
 use crate::errors::{AppError, Result};
 use crate::models::db::ProfileFilters;
 use crate::models::profile::{SearchQuery, SortBy, SortOrder};
