@@ -5,6 +5,7 @@ use stage2::{
     client::ReqwestClient,
     create_app,
     errors::{AppError, Result},
+    models, seeder,
 };
 use tokio::net::TcpListener;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -38,8 +39,10 @@ async fn main() -> Result<()> {
     tracing::info!("Successfully connected to MongoDB Atlas");
 
     let db = mongo_client.database("stage1");
-    let profile_repo = stage2::models::db::ProfileRepo::new(&db);
+    let profile_repo = models::db::ProfileRepo::new(&db);
     profile_repo.create_indexes().await?;
+
+    tokio::spawn(seeder::run(profile_repo.clone()));
 
     let state = AppState {
         client: reqwest_client,

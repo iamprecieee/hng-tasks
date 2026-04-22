@@ -8,6 +8,7 @@ pub mod handlers;
 pub mod middleware;
 pub mod models;
 pub mod parser;
+pub mod seeder;
 pub mod utils;
 
 #[derive(Clone, Debug)]

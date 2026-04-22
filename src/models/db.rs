@@ -274,4 +274,46 @@ impl ProfileRepo {
             }
         }
     }
+
+    pub async fn insert_many_profiles(&self, profiles: Vec<Profile>) -> Result<u64> {
+        if profiles.is_empty() {
+            return Ok(0);
+        }
+
+        let total = profiles.len() as u64;
+        let options = mongodb::options::InsertManyOptions::builder()
+            .ordered(false) // With ordered=false, duplicate key errors are partial failures.
+            .build();
+
+        match self
+            .collection
+            .insert_many(&profiles)
+            .with_options(options)
+            .await
+        {
+            Ok(result) => Ok(result.inserted_ids.len() as u64),
+            Err(e) => {
+                if let ErrorKind::InsertMany(ref insert_many_err) = *e.kind {
+                    if let Some(ref write_errors) = insert_many_err.write_errors {
+                        let all_dup_key = write_errors.iter().all(|err| err.code == 11000);
+                        if all_dup_key {
+                            let inserted = total - write_errors.len() as u64;
+                            return Ok(inserted);
+                        } else {
+                            let non_dup_count =
+                                write_errors.iter().filter(|err| err.code != 11000).count();
+                            return Err(AppError::ServiceUnavailable(format!(
+                                "DB Bulk Insert partially failed: {} non-duplicate errors occurred",
+                                non_dup_count
+                            )));
+                        }
+                    }
+                }
+                Err(AppError::ServiceUnavailable(format!(
+                    "DB Bulk Insert Error: {}",
+                    e
+                )))
+            }
+        }
+    }
 }
