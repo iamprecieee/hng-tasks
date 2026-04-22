@@ -31,13 +31,13 @@ pub async fn run(repo: ProfileRepo) {
     };
 
     let total = seed_file.profiles.len();
-    let now = Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
+    let now = Utc::now();
 
     let profiles: Vec<Profile> = seed_file
         .profiles
         .into_iter()
         .map(|sp| Profile {
-            id: Uuid::now_v7().to_string(),
+            id: Uuid::now_v7(),
             name: sp.name,
             gender: sp.gender,
             gender_probability: sp.gender_probability,
@@ -46,7 +46,7 @@ pub async fn run(repo: ProfileRepo) {
             country_id: sp.country_id,
             country_name: sp.country_name,
             country_probability: sp.country_probability,
-            created_at: now.clone(),
+            created_at: now,
         })
         .collect();
 

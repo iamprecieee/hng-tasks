@@ -4,8 +4,8 @@ use crate::{
     models::{
         db::{Profile, ProfileFilters},
         profile::{
-            CreateProfileRequest, ProfileListResponse, ProfileQuery,
-            ProfileResponse, SearchQuery,
+            CreateProfileRequest, ProfileDto, ProfileListResponse, ProfileQuery, ProfileResponse,
+            SearchQuery,
         },
     },
     parser::parse_query,
@@ -13,7 +13,10 @@ use crate::{
 };
 use axum::{
     Json,
-    extract::{Path, Query, State, rejection::{JsonRejection, QueryRejection}},
+    extract::{
+        Path, Query, State,
+        rejection::{JsonRejection, QueryRejection},
+    },
     http::StatusCode,
     response::IntoResponse,
 };
@@ -49,7 +52,7 @@ pub async fn create_profile(
             Json(ProfileResponse {
                 status: "success".into(),
                 message: Some("Profile already exists".into()),
-                data: existing,
+                data: existing.into(),
             }),
         )
             .into_response());
@@ -62,7 +65,7 @@ pub async fn create_profile(
     )?;
 
     let new_profile = Profile {
-        id: Uuid::now_v7().to_string(),
+        id: Uuid::now_v7(),
         name: name.to_string(),
         gender: gender_res.gender.unwrap_or_else(|| "unknown".to_string()),
         gender_probability: (gender_res.gender_probability * 100.0).round() / 100.0,
@@ -71,7 +74,7 @@ pub async fn create_profile(
         country_id: country_res.country_id,
         country_name: country_res.country_name,
         country_probability: (country_res.country_probability * 100.0).round() / 100.0,
-        created_at: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
+        created_at: chrono::Utc::now(),
     };
 
     state.db.insert_profile(new_profile.clone()).await?;
@@ -81,7 +84,7 @@ pub async fn create_profile(
         Json(ProfileResponse {
             status: "success".into(),
             message: None,
-            data: new_profile,
+            data: new_profile.into(),
         }),
     )
         .into_response())
@@ -105,16 +108,18 @@ pub async fn get_profile(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Result<impl IntoResponse> {
+    let uuid =
+        Uuid::parse_str(&id).map_err(|_| AppError::BadRequest("Invalid parameter type".into()))?;
     let profile = state
         .db
-        .find_by_id(&id)
+        .find_by_id(uuid)
         .await?
         .ok_or_else(|| AppError::NotFound("Profile not found".into()))?;
 
     Ok(Json(ProfileResponse {
         status: "success".into(),
         message: None,
-        data: profile,
+        data: profile.into(),
     }))
 }
 
@@ -137,9 +142,8 @@ pub async fn list_profiles(
     State(state): State<AppState>,
     query: std::result::Result<Query<ProfileQuery>, QueryRejection>,
 ) -> Result<impl IntoResponse> {
-    let Query(query) = query.map_err(|_| {
-        AppError::UnprocessableEntity("Invalid query parameters".to_string())
-    })?;
+    let Query(query) =
+        query.map_err(|_| AppError::UnprocessableEntity("Invalid query parameters".into()))?;
     let filters = ProfileFilters {
         gender: query.gender,
         country_id: query.country_id,
@@ -160,7 +164,7 @@ pub async fn list_profiles(
         .find_paginated(filters, sort_by, order, page, limit)
         .await?;
 
-    let data = profiles;
+    let data: Vec<ProfileDto> = profiles.into_iter().map(Into::into).collect();
 
     Ok(Json(ProfileListResponse {
         status: "success".into(),
@@ -189,7 +193,9 @@ pub async fn delete_profile(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Result<impl IntoResponse> {
-    let deleted = state.db.delete_by_id(&id).await?;
+    let uuid =
+        Uuid::parse_str(&id).map_err(|_| AppError::BadRequest("Invalid parameter type".into()))?;
+    let deleted = state.db.delete_by_id(uuid).await?;
 
     if !deleted {
         return Err(AppError::NotFound("Profile not found".into()));
@@ -219,16 +225,13 @@ pub async fn search_profiles(
     State(state): State<AppState>,
     query: std::result::Result<Query<SearchQuery>, QueryRejection>,
 ) -> Result<impl IntoResponse> {
-    let Query(query) = query.map_err(|_| {
-        AppError::UnprocessableEntity("Invalid query parameters".to_string())
-    })?;
+    let Query(query) =
+        query.map_err(|_| AppError::UnprocessableEntity("Invalid query parameters".into()))?;
     let q = query
         .q
-        .ok_or_else(|| AppError::BadRequest("Missing or empty parameter".to_string()))?;
+        .ok_or_else(|| AppError::BadRequest("Missing or empty parameter".into()))?;
     if q.trim().is_empty() {
-        return Err(AppError::BadRequest(
-            "Missing or empty parameter".to_string(),
-        ));
+        return Err(AppError::BadRequest("Missing or empty parameter".into()));
     }
 
     let (filters, parsed_search_query) = parse_query(&q)?;
@@ -250,7 +253,7 @@ pub async fn search_profiles(
         .find_paginated(filters, sort_by, order, page, limit)
         .await?;
 
-    let data = profiles;
+    let data: Vec<ProfileDto> = profiles.into_iter().map(Into::into).collect();
 
     Ok(Json(ProfileListResponse {
         status: "success".into(),

@@ -1,8 +1,8 @@
 use serde_json::Value;
 
 use crate::{
-    countries::COUNTRIES,
     client::ReqwestClient,
+    countries::COUNTRIES,
     errors::{AppError, Result},
     models::{
         age::{AgeGroup, AgifyResponse},

@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use futures::stream::TryStreamExt;
 use mongodb::{
     Collection, Database, IndexModel, bson,
@@ -5,6 +6,7 @@ use mongodb::{
     options::IndexOptions,
 };
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::{
     errors::{AppError, Result},
@@ -13,7 +15,8 @@ use crate::{
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Profile {
-    pub id: String,
+    #[serde(rename = "_id", with = "bson::serde_helpers::uuid_1_as_binary")]
+    pub id: Uuid,
     pub name: String,
     pub gender: String,
     pub gender_probability: f64,
@@ -22,7 +25,8 @@ pub struct Profile {
     pub country_id: String,
     pub country_name: String,
     pub country_probability: f64,
-    pub created_at: String,
+    #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Default)]
@@ -61,16 +65,6 @@ impl ProfileRepo {
                 IndexOptions::builder()
                     .unique(true)
                     .name("idx_name_unique".to_string())
-                    .build(),
-            )
-            .build();
-
-        let id_index = IndexModel::builder()
-            .keys(bson::doc! { "id": 1 })
-            .options(
-                IndexOptions::builder()
-                    .unique(true)
-                    .name("idx_id_unique".to_string())
                     .build(),
             )
             .build();
@@ -119,7 +113,6 @@ impl ProfileRepo {
         self.collection
             .create_indexes(vec![
                 name_index,
-                id_index,
                 filter_index,
                 age_index,
                 created_at_index,
@@ -142,17 +135,17 @@ impl ProfileRepo {
             .map_err(|e| AppError::ServiceUnavailable(format!("DB Search Error: {}", e)))
     }
 
-    pub async fn find_by_id(&self, id: &str) -> Result<Option<Profile>> {
+    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Profile>> {
         self.collection
-            .find_one(bson::doc! { "id": id })
+            .find_one(bson::doc! { "_id": bson::Uuid::from(id) })
             .await
             .map_err(|e| AppError::ServiceUnavailable(format!("DB Search Error: {}", e)))
     }
 
-    pub async fn delete_by_id(&self, id: &str) -> Result<bool> {
+    pub async fn delete_by_id(&self, id: Uuid) -> Result<bool> {
         let result = self
             .collection
-            .delete_one(bson::doc! { "id": id })
+            .delete_one(bson::doc! { "_id": bson::Uuid::from(id) })
             .await
             .map_err(|e| AppError::ServiceUnavailable(format!("DB Delete Error: {}", e)))?;
         Ok(result.deleted_count > 0)
